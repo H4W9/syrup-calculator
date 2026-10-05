@@ -37,7 +37,7 @@ jobs:
       - name: Package release assets
         run: |
           mkdir -p dist
-          cp syrup-calculator.html index.html README.md dist/
+          cp syrup-calculator.html index.html apple-touch-icon.png README.md dist/
           (cd dist && zip -qr ../syrup-calculator.zip .)
 
       - name: Create GitHub Release

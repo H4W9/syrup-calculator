@@ -50,6 +50,7 @@ and `syrup-calculator.zip` attached.
 | File | What it is |
 |------|-----------|
 | `syrup-calculator.html` | The entire tool — HTML, CSS, and JS in one file |
+| `apple-touch-icon.png` | Home-screen icon used when saved to an iPhone/iPad |
 | `index.html` | Tiny redirect to the tool, so Pages serves it at the repo root |
 | `.github/workflows/release.yml` | CI: tag → GitHub Release |
 | `README.md` | This document |
