@@ -1,0 +1,50 @@
+name: Release
+
+# Cut a release by bumping the version in syrup-calculator.html
+# (the <meta name="app-version"> tag), committing to main, then pushing a
+# matching tag:
+#
+#   git tag v1.0.1 && git push origin v1.0.1
+#
+# This publishes a GitHub Release with the tool attached. The live demo is
+# served by GitHub Pages directly from the main branch
+# (Settings -> Pages -> "Deploy from a branch": main / root), so every push to
+# main updates the site automatically -- no deploy step is needed here.
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+
+permissions:
+  contents: write   # create the release
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve version from tag
+        id: ver
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Stamp version into the page (safety net for the asset)
+        run: |
+          ver='${{ steps.ver.outputs.version }}'
+          sed -i "s|<meta name=\"app-version\" content=\"[^\"]*\">|<meta name=\"app-version\" content=\"${ver}\">|" syrup-calculator.html
+
+      - name: Package release assets
+        run: |
+          mkdir -p dist
+          cp syrup-calculator.html index.html README.md dist/
+          (cd dist && zip -qr ../syrup-calculator.zip .)
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: v${{ steps.ver.outputs.version }}
+          generate_release_notes: true
+          files: |
+            syrup-calculator.html
+            syrup-calculator.zip

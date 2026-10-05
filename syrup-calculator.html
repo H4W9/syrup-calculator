@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Syrup Calculator</title>
+<meta name="app-version" content="1.0.0"><!-- bump this when cutting a release; CI also stamps the tag into the release asset -->
+<style>
+:root{--bg:#fffaf0;--card:#fff;--fg:#2b2410;--mut:#7a6b45;--acc:#e0a100;--accfg:#2b2410;--bd:#e6d9b5;box-sizing:border-box}
+@media (prefers-color-scheme:dark){:root{--bg:#1b1708;--card:#26200d;--fg:#f4ead0;--mut:#b5a679;--acc:#e0a100;--accfg:#1b1708;--bd:#4a3f1c}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;padding:max(16px,env(safe-area-inset-top)) 16px max(16px,env(safe-area-inset-bottom))}
+main{max-width:460px;margin:0 auto}
+h1{font-size:1.4rem;margin:.2em 0 .8em}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px;margin-bottom:14px}
+.lbl{font-size:.8rem;color:var(--mut);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;display:block}
+.row{display:flex;flex-wrap:wrap;gap:8px}
+button,input{font:inherit;font-size:16px}
+.chip{border:1px solid var(--bd);background:transparent;color:var(--fg);border-radius:999px;padding:10px 16px;min-height:44px;cursor:pointer}
+.chip.on{background:var(--acc);color:var(--accfg);border-color:var(--acc);font-weight:600}
+.chip .x{margin-left:8px;opacity:.6}
+.seg{display:flex;border:1px solid var(--bd);border-radius:10px;overflow:hidden}
+.seg button{flex:1;padding:10px;min-height:44px;border:0;background:transparent;color:var(--fg);cursor:pointer}
+.seg button.on{background:var(--acc);color:var(--accfg);font-weight:600}
+input[type=text]{width:100%;padding:12px;min-height:48px;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--fg);font-size:20px}
+.field{margin-bottom:12px}
+.add{display:flex;gap:8px;margin-top:10px}
+.add input{flex:1;font-size:16px;min-height:44px}
+.add button{border:0;background:var(--acc);color:var(--accfg);border-radius:10px;padding:0 16px;font-weight:600;min-height:44px}
+.note{color:var(--mut);font-size:.85rem;margin:6px 0 0}
+.err{color:#c0392b}
+footer{margin-top:22px;color:var(--mut);font-size:12px;text-align:center}
+footer a{color:var(--mut);text-decoration:none}
+footer a:hover{text-decoration:underline}
+#appVersion{font-variant-numeric:tabular-nums}
+.gh-ico{width:14px;height:14px;vertical-align:-2px;margin-right:4px}
+</style>
+</head>
+<body>
+<main>
+<h1>🐝 Sugar Syrup Calculator</h1>
+<p id="nojs" class="note err">Scripts aren't running here, so the ratios and calculations won't work. Open this file in Safari or Chrome instead of a preview window.</p>
+
+<div class="card">
+  <div class="seg" id="units"><button data-u="imp" class="on">Imperial</button><button data-u="met">Metric</button></div>
+</div>
+
+<div class="card">
+  <span class="lbl">Ratio (sugar : water by weight)</span>
+  <div class="row" id="ratios"></div>
+  <div class="add">
+    <input id="newr" type="text" inputmode="decimal" placeholder="e.g. 1.3:1" autocomplete="off">
+    <button id="addb">Add</button>
+  </div>
+  <p class="note" id="rerr"></p>
+</div>
+
+<div class="card">
+  <span class="lbl">Enter any one value</span>
+  <div class="field"><label class="lbl" id="ls" for="s"></label><input id="s" type="text" inputmode="decimal" autocomplete="off"></div>
+  <div class="field"><label class="lbl" id="lw" for="w"></label><input id="w" type="text" inputmode="decimal" autocomplete="off"></div>
+  <div class="field"><label class="lbl" id="lv" for="v"></label><input id="v" type="text" inputmode="decimal" autocomplete="off"></div>
+  <p class="note" id="pct"></p>
+</div>
+<footer>
+  <div>Syrup Calculator <span id="appVersion">v1.0.0</span> &middot; <a href="https://github.com/H4W9/syrup-calculator/releases/latest/download/syrup-calculator.html">Download latest release</a> &middot; <a href="https://github.com/H4W9/syrup-calculator"><svg class="gh-ico" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.65 7.65 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>Source</a></div>
+</footer>
+</main>
+
+<script>
+window.onerror=function(m){var n=document.getElementById("nojs");if(n){n.style.display="block";n.textContent="Script error: "+m}};
+(function(){
+var LB=2.20462, GAL=3.78541, SV=0.62; // kg->lb, L->gal, L of volume added per kg sugar dissolved
+var BUILT=[{l:"1:1",r:1},{l:"1.3:1",r:1.3},{l:"1.5:1",r:1.5},{l:"2:1",r:2}];
+var ratios=BUILT.slice(), cur="1:1", unit="imp";
+function isBuilt(l){return BUILT.some(function(x){return x.l===l})}
+function sortR(){ratios.sort(function(a,b){return a.r-b.r})}
+var field=null, mval=0; // last edited field + its value in metric (kg / L)
+var $=function(i){return document.getElementById(i)};
+var els={s:$("s"),w:$("w"),v:$("v")};
+
+try{var sv=JSON.parse(localStorage.getItem("syrupRatios")||"null");
+ if(sv&&sv.length){sv.forEach(function(x){if(x&&x.r>0&&!ratios.some(function(y){return y.l===x.l}))ratios.push(x)});sortR();}
+ var sc=localStorage.getItem("syrupCur"); if(sc)cur=sc;
+ var su=localStorage.getItem("syrupUnit"); if(su)unit=su;}catch(e){}
+if(!ratios.some(function(x){return x.l===cur}))cur=ratios[0]?ratios[0].l:"1:1";
+function save(){try{localStorage.setItem("syrupRatios",JSON.stringify(ratios.filter(function(x){return !isBuilt(x.l)})));localStorage.setItem("syrupCur",cur);localStorage.setItem("syrupUnit",unit)}catch(e){}}
+function R(){var x=ratios.filter(function(i){return i.l===cur})[0];return x?x.r:1}
+
+function num(t){var n=parseFloat(String(t).replace(",","."));return isFinite(n)&&n>=0?n:null}
+function fmt(n){return String(Math.round(n*100)/100)}
+function toMetric(f,x){return unit==="imp"?(f==="s"?x/LB:x*GAL):x}
+function fromMetric(f,x){return unit==="imp"?(f==="s"?x*LB:x/GAL):x}
+
+function calc(){
+  var r=R(), w;
+  if(field==="s")w=mval/r; else if(field==="w")w=mval; else if(field==="v")w=mval/(1+SV*r); else return null;
+  return {s:r*w,w:w,v:w*(1+SV*r)};
+}
+function render(){
+  $("ls").textContent=unit==="imp"?"Pounds of Sugar":"Kilograms of Sugar";
+  $("lw").textContent=unit==="imp"?"Gallons of Water":"Liters of Water";
+  $("lv").textContent=unit==="imp"?"Gallons of Syrup":"Liters of Syrup";
+  var c=calc(); if(!c){$("pct").textContent="";return}
+  ["s","w","v"].forEach(function(f){ if(f!==field||document.activeElement!==els[f]) els[f].value=fmt(fromMetric(f,c[f])); });
+  $("pct").textContent="Syrup is "+fmt(c.s/(c.s+c.w)*100)+"% sugar by weight.";
+}
+function drawRatios(){
+  var box=$("ratios"); box.innerHTML="";
+  ratios.forEach(function(x,i){
+    var b=document.createElement("button");b.className="chip"+(x.l===cur?" on":"");b.textContent=x.l;
+    b.onclick=function(){cur=x.l;save();drawRatios();render()};
+    if(!isBuilt(x.l)){var s=document.createElement("span");s.className="x";s.textContent="✕";s.title="Remove";
+      s.onclick=function(e){e.stopPropagation();ratios.splice(i,1);if(cur===x.l)cur=ratios[0].l;save();drawRatios();render()};b.appendChild(s)}
+    box.appendChild(b);
+  });
+}
+["s","w","v"].forEach(function(f){
+  els[f].addEventListener("input",function(){
+    var n=num(els[f].value); if(n===null){ if(els[f].value.trim()===""){field=null;["s","w","v"].forEach(function(g){if(g!==f)els[g].value=""});$("pct").textContent=""} return}
+    field=f; mval=toMetric(f,n); render();
+  });
+});
+$("units").addEventListener("click",function(e){
+  var u=e.target.getAttribute&&e.target.getAttribute("data-u"); if(!u||u===unit)return;
+  unit=u; Array.prototype.forEach.call($("units").children,function(b){b.className=b.getAttribute("data-u")===u?"on":""});
+  save(); if(field)els[field].value=""; render();
+});
+function addRatio(){
+  var t=$("newr").value.trim(), m=t.match(/^(\d*[.,]?\d+)\s*(?::\s*(\d*[.,]?\d+))?$/), err=$("rerr");
+  err.className="note";
+  if(!m){err.textContent="Enter a ratio like 1.3:1 or 1.5";err.className="note err";return}
+  var a=parseFloat(m[1].replace(",",".")), b=m[2]?parseFloat(m[2].replace(",",".")):1;
+  if(!(a>0&&b>0)){err.textContent="Values must be above zero";err.className="note err";return}
+  var l=(m[1]+":"+(m[2]||"1")).replace(/,/g,".");
+  if(!ratios.some(function(x){return x.l===l}))ratios.push({l:l,r:a/b});
+  sortR();cur=l;$("newr").value="";err.textContent="";save();drawRatios();render();
+}
+$("addb").onclick=addRatio;
+$("newr").addEventListener("keydown",function(e){if(e.key==="Enter")addRatio()});
+
+Array.prototype.forEach.call($("units").children,function(b){b.className=b.getAttribute("data-u")===unit?"on":""});
+drawRatios();render();
+$("nojs").style.display="none";
+try{var mv=document.querySelector('meta[name="app-version"]');if(mv&&mv.content)$("appVersion").textContent="v"+mv.content}catch(e){}
+})();
+</script>
+</body>
+</html>
